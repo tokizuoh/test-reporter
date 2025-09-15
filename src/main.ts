@@ -210,8 +210,12 @@ class TestReporter {
     if (this.useActionsSummary) {
       core.info('Summary content:')
       core.info(summary)
+      core.info('Writing Actions Summary...')
       core.summary.addRaw(`# ${shortSummary}`)
       await core.summary.addRaw(summary).write()
+      core.info('Actions Summary written successfully')
+    } else {
+      core.info('Actions Summary skipped (use-actions-summary: false)')
     }
 
     // Update Check Run with annotations if enabled
