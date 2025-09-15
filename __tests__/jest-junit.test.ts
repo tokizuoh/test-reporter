@@ -7,16 +7,16 @@ import {DEFAULT_OPTIONS, getReport} from '../src/report/get-report'
 import {normalizeFilePath} from '../src/utils/path-utils'
 
 describe('jest-junit tests', () => {
-  it('intentionally fails to test annotation feature', () => {
-    // This test intentionally fails to generate annotations for verification
-    expect(2 + 2).toBe(5)
-  })
+  // it('intentionally fails to test annotation feature', () => {
+  //   // This test intentionally fails to generate annotations for verification
+  //   expect(2 + 2).toBe(5)
+  // })
 
-  it('fails with object comparison for annotation testing', () => {
-    const actual = {name: 'test', value: 42}
-    const expected = {name: 'test', value: 100}
-    expect(actual).toEqual(expected)
-  })
+  // it('fails with object comparison for annotation testing', () => {
+  //   const actual = {name: 'test', value: 42}
+  //   const expected = {name: 'test', value: 100}
+  //   expect(actual).toEqual(expected)
+  // })
   it('produces empty test run result when there are no test cases in the testsuites element', async () => {
     const fixturePath = path.join(__dirname, 'fixtures', 'empty', 'jest-junit.xml')
     const filePath = normalizeFilePath(path.relative(__dirname, fixturePath))
