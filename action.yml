@@ -89,6 +89,10 @@ inputs:
     description: Customize badge title
     required: false
     default: 'tests'
+  enable-annotations:
+    description: Enable creation of PR annotations for failed tests
+    required: false
+    default: 'false'
   token:
     description: GitHub Access Token
     required: false
