@@ -307,6 +307,7 @@ class TestReporter {
     workDirInput = core.getInput('working-directory', { required: false });
     onlySummary = core.getInput('only-summary', { required: false }) === 'true';
     useActionsSummary = core.getInput('use-actions-summary', { required: false }) === 'true';
+    enableAnnotations = core.getInput('enable-annotations', { required: false }) === 'true';
     badgeTitle = core.getInput('badge-title', { required: false });
     reportTitle = core.getInput('report-title', { required: false });
     token = core.getInput('token', { required: true });
@@ -407,22 +408,9 @@ class TestReporter {
         const skipped = results.reduce((sum, tr) => sum + tr.skipped, 0);
         const shortSummary = `${passed} passed, ${failed} failed and ${skipped} skipped `;
         let baseUrl = '';
-        if (this.useActionsSummary) {
-            const summary = (0, get_report_1.getReport)(results, {
-                listSuites,
-                listTests,
-                baseUrl,
-                onlySummary,
-                useActionsSummary,
-                badgeTitle,
-                reportTitle
-            });
-            core.info('Summary content:');
-            core.info(summary);
-            core.summary.addRaw(`# ${shortSummary}`);
-            await core.summary.addRaw(summary).write();
-        }
-        else {
+        let checkRunId = 0;
+        // Create Check Run if annotations are enabled
+        if (this.enableAnnotations) {
             core.info(`Creating check run ${name}`);
             const createResp = await this.octokit.rest.checks.create({
                 head_sha: this.context.sha,
@@ -434,24 +422,36 @@ class TestReporter {
                 },
                 ...github.context.repo
             });
-            core.info('Creating report summary');
             baseUrl = createResp.data.html_url;
-            const summary = (0, get_report_1.getReport)(results, {
-                listSuites,
-                listTests,
-                baseUrl,
-                onlySummary,
-                useActionsSummary,
-                badgeTitle,
-                reportTitle
-            });
+            checkRunId = createResp.data.id;
+        }
+        // Generate report summary (shared by both Actions Summary and Check Run)
+        core.info('Creating report summary');
+        const summary = (0, get_report_1.getReport)(results, {
+            listSuites,
+            listTests,
+            baseUrl,
+            onlySummary,
+            useActionsSummary,
+            badgeTitle,
+            reportTitle
+        });
+        // Create Actions Summary if enabled
+        if (this.useActionsSummary) {
+            core.info('Summary content:');
+            core.info(summary);
+            core.summary.addRaw(`# ${shortSummary}`);
+            await core.summary.addRaw(summary).write();
+        }
+        // Update Check Run with annotations if enabled
+        if (this.enableAnnotations && checkRunId > 0) {
             core.info('Creating annotations');
             const annotations = (0, get_annotations_1.getAnnotations)(results, this.maxAnnotations);
             const isFailed = this.failOnError && results.some(tr => tr.result === 'failed');
             const conclusion = isFailed ? 'failure' : 'success';
             core.info(`Updating check run conclusion (${conclusion}) and output`);
             const resp = await this.octokit.rest.checks.update({
-                check_run_id: createResp.data.id,
+                check_run_id: checkRunId,
                 conclusion,
                 status: 'completed',
                 output: {
